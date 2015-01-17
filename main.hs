@@ -1,17 +1,30 @@
-type Latex = String
+import System.IO
+import Control.Monad
+import Text.ParserCombinators.Parsec
+import Data.List
 
-documentClass = "\\documentclass{article}\n"
-beginDocument = "\\begin{document}\n"
-endDocument = "\\end{document}"
+type latex = String
 
-constructLatex :: String -> Latex
-constructLatex input = documentClass ++ beginDocument ++ input ++ "\n" ++ endDocument
+emphasisSymbol :: Parser Char
+emphasisSymbol = char '*'
 
-parse :: String -> IO Latex
-parse input = do
-    return $ constructLatex input
+italicizedChar = noneOf "*"
+
+italics = do emphasisSymbol
+             content <- many1 italicizedChar
+             emphasisSymbol
+             return content
+
+bodyText = italics <|> many1 (noneOf "*")
+
+htexFile = many bodyText
+
+readInput :: String -> [Latex]
+readInput input = case parse htexFile "" input of
+    Left err  -> ["No match " ++ show err]
+    Right val -> fmap ("Match found:\n"++) val
 
 main = do 
     contents <- readFile "E:/Google Drive/Code/latexprecompiler/input.htex"
-    outputLines <- parse contents
-    writeFile "E:/Google Drive/Code/latexprecompiler/output.tex" outputLines
+    putStrLn $ intercalate "\n" (readInput contents)
+

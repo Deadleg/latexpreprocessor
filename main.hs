@@ -54,7 +54,7 @@ htexFile = many bodyText
 readInput :: String -> [Latex]
 readInput input = case parse htexFile "" input of
     Left err  -> ["No match " ++ show err]
-    Right val -> "Match found:" : val
+    Right val -> val
 
 main = do 
     contents <- readFile "E:\\Google Drive\\Code\\latexpreprocessor\\input.htex"

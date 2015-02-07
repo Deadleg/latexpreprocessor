@@ -11,20 +11,8 @@ emphasisSymbol = char '*'
 boldSymbol :: Parser String
 boldSymbol = string "**"
 
-beginBoldEmphasisSymbol :: Parser String
-beginBoldEmphasisSymbol = string "*_"
-
-endBoldEmphasisSymbol :: Parser String
-endBoldEmphasisSymbol = string "_*"
-
 emphacizedChar :: Parser Char
 emphacizedChar = noneOf "*"
-
-boldEmphasizedChar :: Parser Char
-boldEmphasizedChar = try (do char '_'
-                             noneOf "*")
-                 <|> noneOf "_"
-                 <?> "Didn't find bold emph."
 
 boldChar :: Parser Char
 boldChar = try (do char '*'
@@ -32,10 +20,14 @@ boldChar = try (do char '*'
        <|> noneOf "*"
        <?> "Didn't find bold." 
 
-boldEmphasis = do beginBoldEmphasisSymbol
-                  content <- many1 boldEmphasizedChar
-                  endBoldEmphasisSymbol
-                  return content
+textChar :: Parser Char
+textChar = noneOf "*("
+
+linkChar :: Parser Char
+linkChar = noneOf "]"
+
+linkDescriptionChar :: Parser Char
+linkDescriptionChar = noneOf ")"
 
 emphasis = do emphasisSymbol
               content <- many1 emphacizedChar
@@ -47,7 +39,14 @@ bold = do boldSymbol
           boldSymbol
           return content
 
-bodyText = try (boldEmphasis) <|> try (bold) <|> try (emphasis) <|> many1 (noneOf "*")
+link = do char '('
+          description <- many1 linkDescriptionChar
+          string ")["
+          link <- many1 linkChar
+          char ']'
+          return (description ++ " " ++ link)
+
+bodyText = try (link) <|> try (bold) <|> try (emphasis) <|> many1 (textChar)
 
 htexFile = many bodyText
 

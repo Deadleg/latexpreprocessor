@@ -1,0 +1,5 @@
+gamma,\gamma
+lambda,\lambda
+epsilon,\epsilon
+x,x
+theta,\theta

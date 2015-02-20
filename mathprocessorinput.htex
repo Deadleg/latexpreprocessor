@@ -1,0 +1,8 @@
+\documentclass{article}
+\begin{document}
+    Here is some math:
+    \begin{equation}
+        !>! displayEquation equationOne
+        !>! displayEquation equationTwo
+    \end{equation}
+\end{document}

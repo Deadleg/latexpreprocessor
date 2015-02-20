@@ -32,19 +32,19 @@ linkDescriptionChar = noneOf ")"
 emphasis = do emphasisSymbol
               content <- many1 emphacizedChar
               emphasisSymbol
-              return content
+              return ("\\emph{" ++ content ++ "}")
 
 bold = do boldSymbol
           content <- many1 boldChar
           boldSymbol
-          return content
+          return ("\\textbf{" ++ content ++ "}")
 
 link = do char '('
           description <- many1 linkDescriptionChar
           string ")["
           link <- many1 linkChar
           char ']'
-          return (description ++ " " ++ link)
+          return ("\\href{" ++ link ++ "}{" ++ description ++ "}")
 
 bodyText = try (link) <|> try (bold) <|> try (emphasis) <|> many1 (textChar)
 
@@ -57,5 +57,5 @@ readInput input = case parse htexFile "" input of
 
 main = do 
     contents <- readFile "E:\\Google Drive\\Code\\latexpreprocessor\\input.htex"
-    putStrLn $ intercalate "\n" (readInput contents)
+    putStrLn $ foldl (\acc x -> acc ++ x) "" (readInput contents)
 

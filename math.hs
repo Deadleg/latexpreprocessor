@@ -2,20 +2,22 @@
 import MathProcessor
 import Data.Data
 import Data.Typeable
+import MathDefaults
 
-gamma = Var "gamma"
-lambda = Var "lambda"
-epsilon = Var "epsilon"
-x = Var "x"
-theta = Func gamma
+gamma = Expression { getKey="gamma", exprType=Var }
+lambda = Expression { getKey="lambda", exprType=Var }
+epsilon = Expression { getKey="epsilon", exprType=Var }
+x = Expression { getKey="x", exprType=Var }
+theta = Expression { getKey="theta", exprType=BinaryFunc gamma lambda constructInfix }
 
-leftEquation = Derivative theta gamma
-rightEquation = (lambda `pow` (x `plus` epsilon)) `multiply` (Derivative (Derivative theta gamma) gamma)
+leftEquation = Expression { getKey="fasda", exprType=MultiFunc [theta,gamma,x,epsilon] constructMulti }
 
-equationOne :: (Expression, Expression)
-equationOne = (leftEquation, rightEquation)
+--rightEquation = (l)
+
+--equationOne :: (Expression, Expression)
+--equationOne = (leftEquation, rightEquation)
 
 main = do
-        latex <- displayEquation rightEquation "vars.txt"
+        latex <- displayEquation leftEquation "vars.txt"
         putStrLn $ latex
 

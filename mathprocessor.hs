@@ -1,12 +1,9 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module MathProcessor
-( multiply
-, pow
-, frac
-, plus
-, Expression(Var, Func, Func2, Derivative)
+( Expression(..)
+, ExpressionType(..)
+, construct
 , displayEquation
 ) where
 
@@ -17,40 +14,36 @@ import qualified Data.HashMap.Strict as Map
 
 type LatexEquation = String
 
-class ExpressionOps a where
-    multiply :: a -> a -> a
-    pow :: a -> a -> a
-    frac :: a -> a -> a
-    plus :: a -> a -> a
+data ExpressionType = Var 
+                    | UnaryFunc  Expression (Map.HashMap String String -> Expression -> (String -> String))
+                    | BinaryFunc Expression Expression (Map.HashMap String String -> Expression -> Expression -> (String -> String))
+                    | MultiFunc  [Expression] (Map.HashMap String String -> [Expression] -> (String -> String))
 
-data Expression = Var String
-                | Func Expression
-                | Func2 Expression Expression
-                | Derivative Expression Expression
-                deriving (Data, Typeable)
+data Expression = Expression { getKey    :: String
+                             , exprType  :: ExpressionType } 
 
-instance ExpressionOps Expression where
-    multiply exp1 exp2 = Func2 exp1 exp2
-    pow exp1 exp2      = Func2 exp1 exp2
-    frac exp1 exp2     = Func2 exp1 exp2
-    plus exp1 exp2     = Func2 exp1 exp2
+class LtxExpr a where
+    getValue  :: Map.HashMap String String -> a -> String
+    construct :: Map.HashMap String String -> a -> String
 
+instance LtxExpr Expression where
+    getValue map expr  = case Map.lookup (getKey expr) map of
+                              Just x  -> x
+                              Nothing -> "Nothing"
+    construct map expr = case exprType expr of
+                              Var                    -> getValue map expr
+                              UnaryFunc exp f        -> f map exp $ getValue map expr
+                              BinaryFunc exp1 exp2 f -> f map exp1 exp2 $ getValue map expr
+                              MultiFunc xs f         -> f map xs $ getValue map expr
+    
 generateKeyValuePairs :: String -> [(String , String)]
 generateKeyValuePairs input = map (\x -> (head x, last x)) (map (splitOn ",") (lines input))
 
-constructLatex :: Expression -> Map.HashMap String String -> LatexEquation
-constructLatex expr map = case expr of
-                        Var name             -> show $ case Map.lookup name map of
-                                                    Just x   -> x
-                                                    Nothing  -> "Nothing"
-                        Func var             -> (show $ toConstr (expr)) ++ (constructLatex var map)
-                        Func2 var1 var2      -> (show $ toConstr (expr)) ++ (constructLatex var1 map) ++ (constructLatex var2 map)
-                        Derivative var1 var2 -> (show $ toConstr (expr)) ++ (constructLatex var1 map) ++ (constructLatex var2 map)
+constructLatex :: Map.HashMap String String -> Expression -> LatexEquation
+constructLatex map expr = construct map expr
 
--- Recursively call displayEquation for non-Var Expressions
 displayEquation :: Expression -> FilePath -> IO (String)
 displayEquation expr filePath = do
                             contents <- readFile filePath
-                            return $ constructLatex expr (Map.fromList (generateKeyValuePairs contents))
-                            
+                            return $ constructLatex (Map.fromList (generateKeyValuePairs contents)) expr
                             

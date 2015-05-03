@@ -2,5 +2,5 @@ gamma,\gamma
 lambda,\lambda
 epsilon,\epsilon
 x,x
-theta,\theta
-fasda,f λ
+plus,+
+function1,f
